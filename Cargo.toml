@@ -39,7 +39,7 @@
   hex = "0.4"
   base64 = "0.22"
   getrandom = { version = "0.3", features = ["std"] }
-  rumqttc = { version = "0.25", default-features = false, features = [
+  rumqttc = { version = "0.25.1", default-features = false, features = [
     "url",
     "websocket",
     "use-rustls-no-provider",
