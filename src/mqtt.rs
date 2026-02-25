@@ -188,12 +188,17 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         };
 
         async move {
+            info!("Brada 1");
+            sleep(Duration::from_secs(1));
             while connect_rx.recv().await.is_some() {
                 info!("Subscribing to command topic, topic: {}", command_topic);
                 if let Err(e) = state.client.subscribe(&command_topic, state.qos).await {
                     error!("Subscribing to command topic error, error: {}", e);
                 }
 
+                info!("Brada 2");
+                sleep(Duration::from_secs(1));
+                
                 info!("Sending conn state, topic: {}", state_topic);
                 if let Err(e) = state
                     .client
@@ -202,6 +207,9 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
                 {
                     error!("Sending state error: {}", e);
                 }
+
+                info!("Brada 3");
+                sleep(Duration::from_secs(1));
             }
         }
     });
