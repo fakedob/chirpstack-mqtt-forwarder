@@ -189,15 +189,21 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
 
         async move {
             info!("Brada 1");
-            sleep(Duration::from_secs(1));
-            while connect_rx.recv().await.is_some() {
+            // sleep(Duration::from_secs(1));
+            sleep(Duration::from_millis(100)).await;
+            loop {
+                if connect_rx.try_recv().is_err() {
+                    break;
+                }
+            }
+            // while connect_rx.recv().await.is_some() {
                 info!("Subscribing to command topic, topic: {}", command_topic);
                 if let Err(e) = state.client.subscribe(&command_topic, state.qos).await {
                     error!("Subscribing to command topic error, error: {}", e);
                 }
 
                 info!("Brada 2");
-                sleep(Duration::from_secs(1));
+                sleep(Duration::from_secs(1)).await;
                 
                 info!("Sending conn state, topic: {}", state_topic);
                 if let Err(e) = state
@@ -209,8 +215,8 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
                 }
 
                 info!("Brada 3");
-                sleep(Duration::from_secs(1));
-            }
+                sleep(Duration::from_secs(1)).await;
+            // }
         }
     });
 
@@ -256,7 +262,7 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
                     Err(e) => {
                         commands::exec_callback(&on_mqtt_connection_error).await;
 
-                        error!("MQTT error, error: {}", e);
+                        error!("MQTT error, error: {:?}", e);
                         sleep(reconnect_interval).await
                     }
                 }
