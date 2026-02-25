@@ -12,6 +12,7 @@ use rumqttc::Transport;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer};
 use tokio::sync::{mpsc, OnceCell};
 use tokio::time::sleep;
+use std::time::Duration;
 
 use crate::backend::{
     get_gateway_id, send_configuration_command, send_downlink_frame, send_mesh_command,
@@ -81,7 +82,7 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         qos,
         topic: lwt_topic.into(),
         message: lwt.into(),
-        retain: true,
+        retain: false,
         properties: None,
     };
 
@@ -196,7 +197,7 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
                 info!("Sending conn state, topic: {}", state_topic);
                 if let Err(e) = state
                     .client
-                    .publish(&state_topic, state.qos, true, b.clone())
+                    .publish(&state_topic, state.qos, false, b.clone())
                     .await
                 {
                     error!("Sending state error: {}", e);
