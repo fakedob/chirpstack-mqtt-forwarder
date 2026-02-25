@@ -51,9 +51,9 @@ impl Backend {
         };
         cmd_sock.send(req.encode_to_vec(), 0)?;
 
-        // set poller so that we can timeout after 300ms
+        // set poller so that we can timeout after 100ms
         let mut items = [cmd_sock.as_poll_item(zmq::POLLIN)];
-        zmq::poll(&mut items, 300)?;
+        zmq::poll(&mut items, 100)?;
         if !items[0].is_readable() {
             return Err(anyhow!("Could not read gateway id"));
         }
@@ -104,9 +104,9 @@ impl Backend {
             let cmd_sock = self.cmd_sock.lock().unwrap();
             cmd_sock.send(cmd.encode_to_vec(), 0)?;
 
-            // set poller so that we can timeout after 300ms
+            // set poller so that we can timeout after 100ms
             let mut items = [cmd_sock.as_poll_item(zmq::POLLIN)];
-            zmq::poll(&mut items, 300)?;
+            zmq::poll(&mut items, 100)?;
             if !items[0].is_readable() {
                 return Err(anyhow!("Could not read down response"));
             }
@@ -222,9 +222,9 @@ async fn event_loop(
             move || -> Result<Option<gw::Event>> {
                 let event_sock = event_sock.lock().unwrap();
 
-                // set poller so that we can timeout after 300ms
+                // set poller so that we can timeout after 100ms
                 let mut items = [event_sock.as_poll_item(zmq::POLLIN)];
-                zmq::poll(&mut items, 300)?;
+                zmq::poll(&mut items, 100)?;
                 if !items[0].is_readable() {
                     return Ok(None);
                 }
