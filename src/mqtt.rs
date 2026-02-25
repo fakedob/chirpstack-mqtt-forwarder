@@ -160,7 +160,7 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         });
     }
 
-    let (client, mut eventloop) = AsyncClient::new(mqtt_opts, 100);
+    let (client, mut eventloop) = AsyncClient::new(mqtt_opts, 0);
     let state = State {
         client,
         topic_prefix,
