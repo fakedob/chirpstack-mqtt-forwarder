@@ -120,6 +120,9 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         _ => return Err(anyhow!("Invalid scheme: {}", mqtt_url.scheme())),
     };
 
+    // Brada default 5
+    mqtt_opts.set_connection_timeout(10);
+
     mqtt_opts.set_last_will(lwt_msg);
     mqtt_opts.set_clean_start(conf.mqtt.clean_session);
     mqtt_opts.set_keep_alive(conf.mqtt.keep_alive_interval);
@@ -197,10 +200,6 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
             false => conn.encode_to_vec(),
         };
 
-        let on_mqtt_connected = conf.callbacks.on_mqtt_connected.clone();
-        let on_mqtt_connection_error = conf.callbacks.on_mqtt_connection_error.clone();
-        let reconnect_interval = conf.mqtt.reconnect_interval;
-
         async move {
             info!("Brada 1 {:?}", b);
             // sleep(Duration::from_secs(1));
@@ -230,11 +229,21 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
 
             info!("Brada 3");
             // }
+        }
+    });
 
-            sleep(Duration::from_secs(1)).await;
+    sleep(Duration::from_secs(1)).await;
+info!("Eventloop");
+    // Eventloop
+    tokio::spawn({
+        let on_mqtt_connected = conf.callbacks.on_mqtt_connected.clone();
+        let on_mqtt_connection_error = conf.callbacks.on_mqtt_connection_error.clone();
+        let reconnect_interval = conf.mqtt.reconnect_interval;
+
+        async move {
+            info!("Starting MQTT event loop");
 
             loop {
-                // BRADA this shit is causing the timeout...
                 match eventloop.poll().await {
                     Ok(v) => {
                         trace!("MQTT event: {:?}", v);
@@ -274,58 +283,6 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
             }
         }
     });
-
-//     sleep(Duration::from_secs(1)).await;
-// info!("Eventloop");
-//     // Eventloop
-//     tokio::spawn({
-        // let on_mqtt_connected = conf.callbacks.on_mqtt_connected.clone();
-        // let on_mqtt_connection_error = conf.callbacks.on_mqtt_connection_error.clone();
-        // let reconnect_interval = conf.mqtt.reconnect_interval;
-
-        // async move {
-        //     info!("Starting MQTT event loop");
-
-        //     loop {
-        //         match eventloop.poll().await {
-        //             Ok(v) => {
-        //                 trace!("MQTT event: {:?}", v);
-
-        //                 match v {
-        //                     Event::Incoming(Incoming::Publish(p)) => {
-        //                         tokio::spawn({
-        //                             async move {
-        //                                 if let Err(e) = message_callback(p).await {
-        //                                     error!("Handling message error, error: {}", e);
-        //                                 }
-        //                             }
-        //                         });
-        //                     }
-        //                     Event::Incoming(Incoming::ConnAck(v)) => {
-        //                         if v.code == ConnectReturnCode::Success {
-        //                             commands::exec_callback(&on_mqtt_connected).await;
-
-        //                             if let Err(e) = connect_tx.try_send(()) {
-        //                                 error!("Send to subscribe channel error, error: {}", e);
-        //                             }
-        //                         } else {
-        //                             error!("Connection error, code: {:?}", v.code);
-        //                             sleep(reconnect_interval).await
-        //                         }
-        //                     }
-        //                     _ => {}
-        //                 }
-        //             }
-        //             Err(e) => {
-        //                 commands::exec_callback(&on_mqtt_connection_error).await;
-
-        //                 error!("MQTT error, error: {:?}", e);
-        //                 sleep(reconnect_interval).await
-        //             }
-        //         }
-        //     }
-        // }
-    // });
 
     STATE.set(state).map_err(|_| anyhow!("Set STATE error"))?;
 
