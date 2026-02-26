@@ -120,7 +120,7 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         _ => return Err(anyhow!("Invalid scheme: {}", mqtt_url.scheme())),
     };
 
-    mqtt_opts.set_last_will(lwt_msg);
+    // mqtt_opts.set_last_will(lwt_msg); // Brada
     mqtt_opts.set_clean_start(conf.mqtt.clean_session);
     mqtt_opts.set_keep_alive(conf.mqtt.keep_alive_interval);
     if !conf.mqtt.username.is_empty() || !conf.mqtt.password.is_empty() {
@@ -191,11 +191,11 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
             info!("Brada 1");
             // sleep(Duration::from_secs(1));
             sleep(Duration::from_millis(100)).await;
-            loop {
-                if connect_rx.try_recv().is_err() {
-                    break;
-                }
-            }
+            // loop {
+            //     if connect_rx.try_recv().is_err() {
+            //         break;
+            //     }
+            // }
             // while connect_rx.recv().await.is_some() {
                 info!("Subscribing to command topic, topic: {}", command_topic);
                 if let Err(e) = state.client.subscribe(&command_topic, state.qos).await {
