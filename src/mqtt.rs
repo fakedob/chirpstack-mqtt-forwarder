@@ -12,7 +12,6 @@ use rumqttc::Transport;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer};
 use tokio::sync::{mpsc, OnceCell};
 use tokio::time::sleep;
-use std::time::Duration;
 
 use crate::backend::{
     get_gateway_id, send_configuration_command, send_downlink_frame, send_mesh_command,
@@ -164,7 +163,7 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         });
     }
 
-    let (client, mut eventloop) = AsyncClient::new(mqtt_opts, 0);
+    let (client, mut eventloop) = AsyncClient::new(mqtt_opts, 100);
     let state = State {
         client,
         topic_prefix,
@@ -173,16 +172,6 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         gateway_id: gateway_id.clone(),
     };
     let state = Arc::new(state);
-
-    info!("Connecting...");
-    sleep(Duration::from_millis(100)).await;
-    loop {
-        if connect_rx.try_recv().is_err() {
-            break;
-        }
-    }
-
-    info!("Connected");
 
     // (Re)subscribe loop
     tokio::spawn({
@@ -201,39 +190,24 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         };
 
         async move {
-            info!("Brada 1 {:?}", b);
-            // sleep(Duration::from_secs(1));
-            // sleep(Duration::from_millis(100)).await;
-            // loop {
-            //     if connect_rx.try_recv().is_err() {
-            //         break;
-            //     }
-            // }
-            // while connect_rx.recv().await.is_some() {
-            info!("Subscribing to command topic, topic: {}", command_topic);
-            if let Err(e) = state.client.subscribe(&command_topic, state.qos).await {
-                error!("Subscribing to command topic error, error: {}", e);
-            }
+            while connect_rx.recv().await.is_some() {
+                info!("Subscribing to command topic, topic: {}", command_topic);
+                if let Err(e) = state.client.subscribe(&command_topic, state.qos).await {
+                    error!("Subscribing to command topic error, error: {}", e);
+                }
 
-            info!("Brada 2");
-            // sleep(Duration::from_secs(1)).await;
-            
-            info!("Sending conn state, topic: {}", state_topic);
-            if let Err(e) = state
-                .client
-                .publish(&state_topic, state.qos, false, b.clone())
-                .await
-            {
-                error!("Sending state error: {}", e);
+                info!("Sending conn state, topic: {}", state_topic);
+                if let Err(e) = state
+                    .client
+                    .publish(&state_topic, state.qos, true, b.clone())
+                    .await
+                {
+                    error!("Sending state error: {}", e);
+                }
             }
-
-            info!("Brada 3");
-            // }
         }
     });
 
-    sleep(Duration::from_secs(1)).await;
-info!("Eventloop");
     // Eventloop
     tokio::spawn({
         let on_mqtt_connected = conf.callbacks.on_mqtt_connected.clone();

@@ -158,6 +158,9 @@ impl BackendTrait for Backend {
 
     async fn send_downlink_frame(&self, pl: gw::DownlinkFrame) -> Result<()> {
         info!("Sending downlink frame, downlink_id: {}", pl.downlink_id);
+
+        info!("MQTT BRADA: {:?}", pl);
+
         let downlink_id = pl.downlink_id;
 
         let tx_ack = {
