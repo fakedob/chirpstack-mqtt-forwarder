@@ -119,6 +119,11 @@ pub async fn setup(conf: &Configuration) -> Result<()> {
         _ => return Err(anyhow!("Invalid scheme: {}", mqtt_url.scheme())),
     };
 
+    // Set timeout to 10 seconds, as some enterprise MQTT infrastructure require more time to establish 
+    // connection and 5s can timeout if the server phisical location is too far from the gateway.
+
+    mqtt_opts.set_connection_timeout(10);
+
     mqtt_opts.set_last_will(lwt_msg);
     mqtt_opts.set_clean_start(conf.mqtt.clean_session);
     mqtt_opts.set_keep_alive(conf.mqtt.keep_alive_interval);
